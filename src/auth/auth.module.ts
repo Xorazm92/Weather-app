@@ -16,6 +16,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         signOptions: {
           expiresIn: configService.get<string>('ACCESS_TOKEN_EXPIRES_IN'),
         },
+        isGlobal: true,
       }),
       inject: [ConfigService],
     }),

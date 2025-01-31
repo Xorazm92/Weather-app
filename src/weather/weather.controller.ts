@@ -1,12 +1,13 @@
 import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { WeatherService } from './weather.service';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetWeatherDto } from './dto/weather.dto';
-import { JwtAuthGuard } from '../guard/index';
+import { AuthGuard } from '../guard/auth.guard';
 
 @ApiTags('weather')
+@UseGuards(AuthGuard)
+@ApiBearerAuth()
 @Controller('weather')
-@UseGuards(JwtAuthGuard)
 export class WeatherController {
   constructor(private readonly weatherService: WeatherService) {}
 

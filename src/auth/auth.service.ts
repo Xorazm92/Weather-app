@@ -20,44 +20,24 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto) {
- 
-    
     const existingUser = await this.userModel.findOne({
       username: registerDto.username,
     });
     if (existingUser) {
       throw new BadRequestException('Username already exists');
     }
-
-   
-    
-    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-
-  
-    
-    const newUser = await this.userModel.create({
-      ...registerDto,
-      password: hashedPassword,
-    });
-
-    
-    
-    let userObject = newUser.toObject();
-
- 
-    
-    delete userObject.password;
-
+    const salt = await bcrypt.genSalt(10);
+    registerDto.password = await bcrypt.hash(registerDto.password, salt);
+    const newUser = new this.userModel(registerDto);
+    await newUser.save();
     return {
       status_code: HttpStatus.CREATED,
       message: 'User successfully created',
-      data: userObject,
+      data: newUser,
     };
   }
 
   async login(loginDto: LoginDto) {
-  
-    
     const user = await this.userModel.findOne({ username: loginDto.username });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -72,10 +52,7 @@ export class AuthService {
         `Invalid password for user${loginDto.username}`,
       );
     }
-
-    
     const token = this.generateToken(user);
-
     return {
       status_code: HttpStatus.OK,
       message: 'OK',
@@ -84,12 +61,10 @@ export class AuthService {
   }
 
   private generateToken(user: User) {
-
     const payload = {
       sub: user._id,
       username: user.username,
     };
-
 
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.ACCESS_TOKEN_SECRET,

@@ -11,14 +11,14 @@ async function runApp() {
     const PORT = process.env.PORT || 3000;
 
     app.enableCors(corsConfig);
-    
+
     app.setGlobalPrefix('api');
-    
+
     app.useGlobalPipes(new ValidationPipe());
-    
+
     const document = SwaggerModule.createDocument(app, swaggerConfig);
     SwaggerModule.setup('/api/docs', app, document);
-    
+
     await app.listen(PORT, () => {
       console.log('Server is running on port', PORT);
     });

@@ -13,9 +13,6 @@ export class AuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext) {
     const req = context.switchToHttp().getRequest();
     const auth_header = req.headers.authorization;
-
-    console.log({ context: context, headers: req.headers });
-
     if (!auth_header) {
       throw new UnauthorizedException({
         message: 'Token topilmadi!',
@@ -31,14 +28,15 @@ export class AuthGuard implements CanActivate {
     }
 
     try {
-      let user = this.jwtService.verify(token, {
-        secret: process.env.ACCESS_TOKEN_KEY,
+      const user = await this.jwtService.verify(token, {
+        secret: process.env.ACCESS_TOKEN_SECRET,
       });
 
       if (user.secret != process.env.TOKEN) {
         throw new UnauthorizedException('Tokenda xatolik!');
       }
     } catch (error) {
+      console.log(error);
       throw new UnauthorizedException({
         message: 'Token vaqti tugagan!',
       });

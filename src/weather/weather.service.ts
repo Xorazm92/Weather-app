@@ -4,6 +4,8 @@ import { Model } from 'mongoose';
 import { Weather } from './schemas/weather.schema';
 import axios from 'axios';
 import { Cron } from '@nestjs/schedule';
+import fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class WeatherService {
@@ -39,17 +41,34 @@ export class WeatherService {
     return '#616161';
   }
 
-  @Cron('0 0 * * *') // Har kuni yarim tunda
+  @Cron('*/1 * * * *')
   async updateWeatherData() {
     try {
-      const cities = ['Tashkent', 'Samarkand', 'Bukhara', 'Namangan', 'Andijan'];
+      // const filePath = path.join(
+      //   process.cwd(),
+      //   'src',
+      //   'json',
+      //   'country-name.json',
+      // );
+      // await fs.readFile(filePath, 'utf8', (err, data) => {
+      //   if (err) {
+      //     return;
+      //   }
+      //   const countries = JSON.parse(data);
+      //   console.log(countries);
+      // });
+      const cities = [
+        'Tashkent',
+        'Samarkand',
+        'Bukhara',
+        'Namangan',
+        'Andijan',
+      ];
       for (const city of cities) {
         const weatherData = await this.fetchWeatherData(city);
-        await this.weatherModel.findOneAndUpdate(
-          { name: city },
-          weatherData,
-          { upsert: true }
-        );
+        await this.weatherModel.findOneAndUpdate({ name: city }, weatherData, {
+          upsert: true,
+        });
       }
     } catch (error) {
       console.error('Weather update failed:', error);
@@ -59,11 +78,11 @@ export class WeatherService {
   private async fetchWeatherData(city: string) {
     const apiKey = process.env.WEATHER_API_KEY;
     const url = `http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}`;
-    
+
     try {
       const response = await axios.get(url);
       const data = response.data;
-      
+
       return {
         name: data.location.name,
         country: data.location.country,
@@ -88,7 +107,9 @@ export class WeatherService {
         .exec();
 
       if (!weatherData.length) {
-        throw new BadRequestException('No weather data found for specified cities');
+        throw new BadRequestException(
+          'No weather data found for specified cities',
+        );
       }
 
       return weatherData;

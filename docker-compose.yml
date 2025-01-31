@@ -1,20 +1,15 @@
 version: '3'
 services:
-  nestjs-app:
-    build:
-      dockerfile: Dockerfile
+  mongodb:
+    image: mongo:latest
+    container_name: weather_mongodb
     ports:
-      - 3000:3000
-    env_file:
-      - .env
-    depends_on:
-      - postgres
-
-  postgres:
-    image: postgres
+      - "27018:27017"
     environment:
-      PG_USER: ${PG_USER}
-      PG_PASSWORD: ${PG_PASS}
-      PG_DB: ${PG_DB}
-    ports:
-      - 5432:5432
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
