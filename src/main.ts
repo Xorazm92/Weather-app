@@ -1,16 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import { SwaggerModule } from '@nestjs/swagger';
 import { swaggerConfig } from './config/swagger.config';
 import { corsConfig } from './config/cors.config';
-import { initializeFirebaseApp } from './config/firebase.config';
-initializeFirebaseApp();
 
 async function runApp() {
   try {
     const app = await NestFactory.create(AppModule);
-    const PORT = 4000;
+    const PORT = process.env.PORT || 3000;
 
     app.enableCors(corsConfig);
     
