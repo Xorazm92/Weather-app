@@ -62,6 +62,11 @@ export class WeatherService {
         'Bukhara',
         'Namangan',
         'Andijan',
+        'Fergana',
+        'Jizzakh',
+        'Karshi',
+        'Gulistan',
+        'Urgench',
       ];
       for (const city of cities) {
         const weatherData = await this.fetchWeatherData(city);
@@ -75,15 +80,16 @@ export class WeatherService {
   }
 
   private async fetchWeatherData(city: string) {
-    const apiKey = process.env.WEATHER_API_KEY;
-    const url = `http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}`;
-
     try {
+      const apiKey = process.env.WEATHER_API_KEY;
+      const encodedCity = encodeURIComponent(city);
+      const url = `http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${encodedCity}`;
+
       const response = await axios.get(url);
       const data = response.data;
 
       return {
-        name: data.location.name,
+        name: city, 
         country: data.location.country,
         lat: data.location.lat,
         lon: data.location.lon,
@@ -95,6 +101,7 @@ export class WeatherService {
         cloud_color: this.getColorByCloud(data.current.cloud),
       };
     } catch (error) {
+      console.error('API Error:', error.response?.data || error.message);
       throw new BadRequestException(`Failed to fetch weather data for ${city}`);
     }
   }
