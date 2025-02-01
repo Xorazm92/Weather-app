@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import { Weather } from './schemas/weather.schema';
 import axios from 'axios';
 import { Cron } from '@nestjs/schedule';
-import fs from 'fs';
+import * as fs from 'fs';
 import * as path from 'path';
 
 @Injectable()
@@ -41,22 +41,21 @@ export class WeatherService {
     return '#616161';
   }
 
+  private async getAllCountries(): Promise<string[]> {
+    try {
+      const filePath = path.join(process.cwd(), 'src', 'json', 'country-name.json');
+      const data = await fs.promises.readFile(filePath, 'utf8');
+      const countries = JSON.parse(data);
+      return countries.map(country => country.name);
+    } catch (error) {
+      console.error('Error reading countries file:', error);
+      return [];
+    }
+  }
+
   @Cron('*/1 * * * *')
   async updateWeatherData() {
     try {
-      // const filePath = path.join(
-      //   process.cwd(),
-      //   'src',
-      //   'json',
-      //   'country-name.json',
-      // );
-      // await fs.readFile(filePath, 'utf8', (err, data) => {
-      //   if (err) {
-      //     return;
-      //   }
-      //   const countries = JSON.parse(data);
-      //   console.log(countries);
-      // });
       const cities = [
         'Tashkent',
         'Samarkand',
@@ -102,19 +101,31 @@ export class WeatherService {
 
   async getWeatherByCity(cities: string[]) {
     try {
-      const weatherData = await this.weatherModel
-        .find({ name: { $in: cities } })
-        .exec();
+      const allCountries = await this.getAllCountries();
+      const results = [];
 
-      if (!weatherData.length) {
-        throw new BadRequestException(
-          'No weather data found for specified cities',
-        );
+      for (const city of cities) {
+        // Avval bazadan qidiramiz
+        let weatherData = await this.weatherModel.findOne({ name: city }).exec();
+
+        // Agar bazada bo'lmasa, API dan olamiz
+        if (!weatherData) {
+          const newWeatherData = await this.fetchWeatherData(city);
+          weatherData = await this.weatherModel.create(newWeatherData);
+        }
+
+        // Davlat ro'yxatda borligini tekshiramiz
+        const isValidCountry = allCountries.includes(weatherData.country);
+        
+        results.push({
+          ...weatherData.toObject(),
+          isValidCountry
+        });
       }
 
-      return weatherData;
+      return results;
     } catch (error) {
-      throw new BadRequestException(error.message);
+      throw new BadRequestException('Failed to get weather data');
     }
   }
 }
